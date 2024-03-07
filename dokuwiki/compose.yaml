@@ -1,0 +1,65 @@
+# Docker Compose file for a personal DokuWiki instance
+# Václav Brožík, 2024-03-07
+
+version: "3.8"
+services:
+
+  dokuwiki:
+    image: php:8-apache
+    restart: unless-stopped
+    networks:
+      - frontend_network
+    ports:
+      - ${HTTP_PORT:-40800}:80
+    volumes:
+      - type: volume
+        source: dokuwiki_data
+        target: /var/www/html
+    healthcheck:
+      test: ["CMD", "curl", "-fsI", "http://localhost/doku.php"]
+      interval: 5m
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+
+  backup:
+    # To be run manually: docker compose run --rm backup
+    image: alpine
+    restart: "no"
+    network_mode: none
+    volumes:
+      - dokuwiki_data:/volume:ro
+      - ${BACKUP_DIR:-./}:/backup
+    command: >
+      sh -c '
+        backup_file_name=${BACKUP_FILE_PREFIX:-dokuwiki_data_backup_}$$(date +%Y%m%d%H%M%S)${BACKUP_FILE_SUFFIX:-.tbz}
+        tar -cjf "/backup/$$backup_file_name" . -C /volume &&
+          printf %s\\n "$$backup_file_name"
+      '
+    profiles:
+      - backup
+
+  restore:
+    # To be run manually: docker compose run --rm restore
+    image: alpine
+    restart: "no"
+    network_mode: none
+    volumes:
+      - type: volume
+        source: dokuwiki_data
+        target: /volume
+        volume:
+          nocopy: true
+      - ${BACKUP_DIR:-./}:/backup:ro
+    command: >
+      tar -xjf /backup/${BACKUP_FILE_PREFIX:-dokuwiki_data_backup_}current${BACKUP_FILE_SUFFIX:-.tbz} -C /volume
+    profiles:
+      - restore
+
+networks:
+  frontend_network:
+    driver: bridge
+
+volumes:
+  dokuwiki_data:
+    driver: local
