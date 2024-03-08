@@ -32,7 +32,7 @@ services:
       - ${BACKUP_DIR:-./}:/backup
     command: >
       sh -c '
-        backup_file_name=${BACKUP_FILE_PREFIX:-dokuwiki_data_backup_}$$(date +%Y%m%d%H%M%S)${BACKUP_FILE_SUFFIX:-.tbz}
+        backup_file_name=${BACKUP_FILE_PREFIX-dokuwiki_data_backup_}$$(date +%Y%m%d%H%M%S)${BACKUP_FILE_SUFFIX-.tbz}
         tar -cjf "/backup/$$backup_file_name" . -C /volume &&
           printf %s\\n "$$backup_file_name"
       '
@@ -52,7 +52,7 @@ services:
           nocopy: true
       - ${BACKUP_DIR:-./}:/backup:ro
     command: >
-      tar -xjf /backup/${BACKUP_FILE_PREFIX:-dokuwiki_data_backup_}current${BACKUP_FILE_SUFFIX:-.tbz} -C /volume
+      tar -xjf /backup/${BACKUP_FILE_PREFIX-dokuwiki_data_backup_}current${BACKUP_FILE_SUFFIX-.tbz} -C /volume
     profiles:
       - restore
 
