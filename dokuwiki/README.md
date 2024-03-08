@@ -41,5 +41,7 @@ You can use the script `backup.sh` which will make a backup an also copy it to a
 - Use `Dockerfile` to tune the image for DokuWiki and to install the DokuWiki into the image.
     If DokuWiki installation is not added, add at least instructions for clean installation of DokuWiki.
 - Use `xz` instead of `bzip2` for better compression. It is not available in the Alpine Linux image.
+- Inside compose file use [extensions](https://docs.docker.com/compose/compose-file/11-extension/)[^2] to avoid repetition of the same parameters in multiple places.
 
 [^1]: Symlink may not work because during the restore the directory with the file is mounted as `/backup`.
+[^2]: Also <https://docs.docker.com/compose/compose-file/compose-file-v3/#extension-fields>
