@@ -1,7 +1,23 @@
-# Docker Compose file for a personal DokuWiki instance
+# Docker Compose file (version post 3) for a personal DokuWiki instance
 # Václav Brožík, 2024-03-07
 
-version: "3.8"
+# Used environment variables:
+# - HTTP_PORT: Port for the DokuWiki instance (default: 40800)
+# - BACKUP_DIR: Directory for backup files (default: current directory)
+# - BACKUP_FILE_PREFIX: Prefix for backup files (default: dokuwiki_data_backup_)
+# - BACKUP_FILE_SUFFIX: Suffix for backup files (default: .tbz)
+# - BACKUP_RESTORE_DATE: Date in the backup file name to restore (default: current)
+
+# Example usage:
+# - To start the DokuWiki instance:
+#     docker compose up -d
+# - To create a backup in the current directory:
+#     docker compose --profile backup run --rm backup
+# - To restore from a backup from date 2024-03-07:
+#     docker compose --profile restore run --rm -e BACKUP_RESTORE_DATE=20240307 restore
+
+# version: "3.8"
+
 services:
 
   dokuwiki:
@@ -33,7 +49,7 @@ services:
     command: >
       sh -c '
         backup_file_name=${BACKUP_FILE_PREFIX-dokuwiki_data_backup_}$$(date +%Y%m%d%H%M%S)${BACKUP_FILE_SUFFIX-.tbz}
-        tar -cjf "/backup/$$backup_file_name" . -C /volume &&
+        tar -cjf "/backup/$$backup_file_name" -C /volume . &&
           printf %s\\n "$$backup_file_name"
       '
     profiles:
@@ -52,7 +68,7 @@ services:
           nocopy: true
       - ${BACKUP_DIR:-./}:/backup:ro
     command: >
-      tar -xjf /backup/${BACKUP_FILE_PREFIX-dokuwiki_data_backup_}current${BACKUP_FILE_SUFFIX-.tbz} -C /volume
+      tar -xjf /backup/${BACKUP_FILE_PREFIX-dokuwiki_data_backup_}${BACKUP_RESTORE_DATE:-current}${BACKUP_FILE_SUFFIX-.tbz} -C /volume
     profiles:
       - restore
 
